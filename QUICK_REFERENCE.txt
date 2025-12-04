@@ -1,0 +1,269 @@
+╔══════════════════════════════════════════════════════════════════╗
+║          BAC SYSTEM - QUICK REFERENCE GUIDE                      ║
+╚══════════════════════════════════════════════════════════════════╝
+
+🌐 ACCESS URLs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Login Page:    http://localhost/bac-system/public/
+Dashboard:     http://localhost/bac-system/public/dashboard.php
+phpMyAdmin:    http://localhost/phpmyadmin
+
+
+🔑 DEFAULT LOGIN CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┌──────────────────┬──────────────┬──────────────┐
+│ Role             │ Username     │ Password     │
+├──────────────────┼──────────────┼──────────────┤
+│ Admin            │ admin        │ admin123     │
+│ BAC Secretariat  │ secretariat  │ secret123    │
+│ Committee Member │ member       │ member123    │
+│ Auditor/COA      │ auditor      │ audit123     │
+└──────────────────┴──────────────┴──────────────┘
+
+
+⚡ QUICK TASKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣  START XAMPP
+   → Open XAMPP Control Panel
+   → Start Apache
+   → Start MySQL
+
+2️⃣  ADD NEW SUPPLIER
+   → Login as Admin/Secretariat
+   → Suppliers → Add New Supplier
+   → Fill form → Save
+
+3️⃣  UPLOAD DOCUMENT
+   → Documents → Upload Document
+   → Select Supplier & Document Type
+   → Choose File → Set Dates → Upload
+
+4️⃣  CHECK COMPLIANCE
+   → Compliance Check
+   → Select Supplier
+   → View checklist & percentage
+
+5️⃣  VIEW ACTIVITY LOGS
+   → Login as Admin/Auditor
+   → Activity Logs
+   → Filter by user/module/date
+
+6️⃣  ADD NEW USER
+   → Login as Admin
+   → Users → Add New User
+   → Set credentials & role → Save
+
+7️⃣  CHANGE PASSWORD
+   → Users → Edit (pencil icon)
+   → Enter new password → Update
+
+
+📊 DOCUMENT STATUS EXPLAINED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🟢 VALID        → File uploaded + Not expired
+🟡 FOR RENEWAL  → Expires within 30 days
+🔴 EXPIRED      → Past expiration date
+⚫ MISSING      → No file uploaded
+
+
+📋 BAC REQUIRED DOCUMENTS (13)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 1. PhilGEPS Registration
+ 2. Registration Certificate
+ 3. Mayor's Permit
+ 4. Tax Clearance
+ 5. Bid Security
+ 6. Omnibus Sworn Statement
+ 7. Audited Financial Statement
+ 8. Net Statement Contracting Capacity
+ 9. Resolution
+10. Notice of Award
+11. Performance Bond
+12. Purchase Order/Contract
+13. Notice to Proceed
+
+
+🎯 USER PERMISSIONS MATRIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┌────────────────────┬───────┬──────────┬─────────┬─────────┐
+│ Action             │ Admin │ Secret.  │ Member  │ Auditor │
+├────────────────────┼───────┼──────────┼─────────┼─────────┤
+│ View Dashboard     │  ✓    │    ✓     │    ✓    │    ✓    │
+│ Add Supplier       │  ✓    │    ✓     │    ✗    │    ✗    │
+│ Edit Supplier      │  ✓    │    ✓     │    ✗    │    ✗    │
+│ Delete Supplier    │  ✓    │    ✗     │    ✗    │    ✗    │
+│ Upload Document    │  ✓    │    ✓     │    ✗    │    ✗    │
+│ Edit Document      │  ✓    │    ✓     │    ✗    │    ✗    │
+│ Delete Document    │  ✓    │    ✗     │    ✗    │    ✗    │
+│ View Compliance    │  ✓    │    ✓     │    ✓    │    ✓    │
+│ Manage Users       │  ✓    │    ✗     │    ✗    │    ✗    │
+│ View Activity Logs │  ✓    │    ✗     │    ✗    │    ✓    │
+└────────────────────┴───────┴──────────┴─────────┴─────────┘
+
+
+🔧 COMMON DATABASE QUERIES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Reset Admin Password:
+UPDATE users 
+SET password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' 
+WHERE username = 'admin';
+-- New password: admin123
+
+Count Documents by Status:
+SELECT status, COUNT(*) as count 
+FROM eligibility_docs 
+GROUP BY status;
+
+View Expired Documents:
+SELECT s.company_name, dt.document_name, ed.expiration_date
+FROM eligibility_docs ed
+JOIN suppliers s ON ed.supplier_id = s.id
+JOIN doc_types dt ON ed.doc_type_id = dt.id
+WHERE ed.status = 'Expired'
+ORDER BY ed.expiration_date;
+
+List All Activity Today:
+SELECT * FROM activity_logs 
+WHERE DATE(created_at) = CURDATE()
+ORDER BY created_at DESC;
+
+
+📁 IMPORTANT FILE LOCATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Database Config:  C:\xampp\htdocs\bac-system\config\db.php
+Uploaded Files:   C:\xampp\htdocs\bac-system\uploads\
+Database SQL:     C:\xampp\htdocs\bac-system\database.sql
+Login Page:       C:\xampp\htdocs\bac-system\public\index.php
+
+
+🎨 STATUS BADGE COLORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Valid          → Green (bg-success)
+For Renewal    → Yellow (bg-warning)
+Expired        → Red (bg-danger)
+Missing        → Gray (bg-secondary)
+Active         → Green (bg-success)
+Inactive       → Gray (bg-secondary)
+
+
+💡 PRO TIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Always set expiration dates for documents
+✓ Use PDF format for official documents
+✓ Set dates within 30 days to test "For Renewal" status
+✓ Check Dashboard regularly for expiring documents
+✓ Use Compliance Check before procurement bidding
+✓ Print compliance reports for record-keeping
+✓ Review Activity Logs monthly for audit trail
+✓ Change default passwords after first login
+✓ Backup database regularly via phpMyAdmin
+
+
+🐛 QUICK FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Can't login?
+→ Clear browser cache
+→ Check database imported
+→ Verify MySQL is running
+
+White screen?
+→ Check Apache is running
+→ Check PHP error logs
+→ Verify file permissions
+
+Upload fails?
+→ Check uploads/ folder exists
+→ Check file size < 10MB
+→ Use PDF/JPG/PNG only
+
+Session errors?
+→ Restart Apache
+→ Clear cookies
+→ Use Incognito mode
+
+
+📞 SUPPORT CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before asking for help, check:
+[ ] XAMPP Apache is green
+[ ] XAMPP MySQL is green
+[ ] Database imported successfully
+[ ] Using correct URL with /public/
+[ ] Browser cache cleared
+[ ] No PHP errors in Apache error log
+
+
+🔄 MAINTENANCE TASKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Daily:
+→ Check dashboard for expiring documents
+→ Review new document uploads
+
+Weekly:
+→ Review activity logs
+→ Update expiring documents
+
+Monthly:
+→ Backup database (phpMyAdmin → Export)
+→ Archive old activity logs
+→ Review user accounts
+
+Quarterly:
+→ Generate compliance reports for all suppliers
+→ Audit document status accuracy
+
+
+📊 COMPLIANCE CALCULATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Formula: (Valid Documents / Total Documents) × 100
+
+Example:
+Valid: 10
+For Renewal: 2
+Expired: 1
+Missing: 0
+Total: 13
+
+Compliance = (10 / 13) × 100 = 76.9%
+
+Rating:
+≥ 80% → Excellent (Green bar)
+50-79% → Fair (Yellow bar)
+< 50% → Poor (Red bar)
+
+
+🎓 KEYBOARD SHORTCUTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ctrl + P     → Print compliance report
+Ctrl + F     → Search in tables
+Ctrl + Click → Open link in new tab
+F5           → Refresh page
+Ctrl + W     → Close browser tab
+
+
+🔐 SECURITY REMINDERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Change default passwords immediately
+✓ Use strong passwords (8+ characters)
+✓ Don't share login credentials
+✓ Logout when done
+✓ Use HTTPS in production
+✓ Regular database backups
+✓ Limit Admin access
+✓ Review activity logs regularly
+
+
+═══════════════════════════════════════════════════════════════════
+
+Keep this reference handy for daily operations!
+
+═══════════════════════════════════════════════════════════════════

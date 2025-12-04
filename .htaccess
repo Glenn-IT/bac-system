@@ -1,0 +1,29 @@
+# Security Settings
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Prevent directory listing
+    Options -Indexes
+    
+    # Protect config folder
+    RewriteRule ^config/ - [F,L]
+    
+    # Protect includes folder
+    RewriteRule ^includes/ - [F,L]
+</IfModule>
+
+# Disable directory browsing
+Options -Indexes
+
+# Prevent access to sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# PHP security settings
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log /tmp/php-error.log
+</IfModule>

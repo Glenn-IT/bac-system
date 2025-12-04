@@ -1,0 +1,297 @@
+BAC SYSTEM - COMPLETE FILE STRUCTURE
+=====================================
+
+C:\xampp\htdocs\bac-system\
+│
+├── 📄 database.sql              ← Import this in phpMyAdmin
+├── 📄 README.md                 ← Full documentation
+├── 📄 SETUP.txt                 ← Quick setup guide
+├── 📄 SYSTEM_OVERVIEW.txt       ← System summary
+├── 📄 .htaccess                 ← Security rules
+│
+├── 📁 config/
+│   └── db.php                   ← Database connection & helper functions
+│
+├── 📁 includes/
+│   ├── header.php               ← HTML head, CSS, and styles
+│   ├── navbar.php               ← Sidebar navigation menu
+│   └── footer.php               ← Bootstrap JS & scripts
+│
+├── 📁 public/                   ← START HERE
+│   ├── index.php                ← 🔐 LOGIN PAGE (Entry point)
+│   ├── dashboard.php            ← 📊 Main dashboard
+│   └── logout.php               ← Logout handler
+│
+├── 📁 suppliers/                ← Supplier Management
+│   ├── list.php                 ← View all suppliers (with search)
+│   ├── add.php                  ← Add new supplier
+│   ├── edit.php                 ← Edit supplier
+│   ├── view.php                 ← View supplier details
+│   └── delete.php               ← Delete supplier (Admin)
+│
+├── 📁 documents/                ← Document Management
+│   ├── list.php                 ← View all documents (with filters)
+│   ├── add.php                  ← Upload new document
+│   ├── edit.php                 ← Edit/replace document
+│   ├── delete.php               ← Delete document (Admin)
+│   └── compliance.php           ← 📋 RA 9184 Compliance Checklist
+│
+├── 📁 users/                    ← User Management (Admin Only)
+│   ├── list.php                 ← View all users
+│   ├── add.php                  ← Create new user
+│   ├── edit.php                 ← Edit user/change password
+│   └── delete.php               ← Delete user (Admin)
+│
+├── 📁 logs/                     ← Activity Logs (Admin/Auditor)
+│   └── activity.php             ← 📜 View activity logs
+│
+└── 📁 uploads/                  ← 📎 Uploaded files storage
+    └── README.txt               ← Info about uploads folder
+
+
+=====================================
+KEY FILES EXPLAINED
+=====================================
+
+🔐 AUTHENTICATION
+-----------------
+public/index.php     → Login form with username/password
+public/logout.php    → Destroys session and redirects to login
+
+📊 DASHBOARD
+-----------------
+public/dashboard.php → Shows:
+                       • Total suppliers
+                       • Valid/Expired/Renewal/Missing document counts
+                       • Documents requiring attention
+                       • Recent activity (for Admin/Auditor)
+                       • Quick action buttons
+
+🏢 SUPPLIERS MODULE
+-----------------
+suppliers/list.php   → Table of all suppliers
+                       • Search by name/TIN/PhilGEPS
+                       • Actions: View, Edit, Delete
+
+suppliers/add.php    → Form to add new supplier
+                       Fields: Company name, Address, TIN, 
+                       PhilGEPS, Email, Contact person, etc.
+
+suppliers/edit.php   → Update supplier information
+                       Pre-filled form with existing data
+
+suppliers/view.php   → Detailed supplier view
+                       • Company information table
+                       • Document summary (counts)
+                       • List of all uploaded documents
+
+suppliers/delete.php → Removes supplier and all documents
+                       (Admin only, with confirmation)
+
+📄 DOCUMENTS MODULE
+-----------------
+documents/list.php   → Table of all documents
+                       Filters: Supplier, Doc type, Status
+                       • Download files
+                       • Edit/Delete actions
+
+documents/add.php    → Upload document form
+                       • Select supplier & document type
+                       • Upload file (PDF/JPG/PNG)
+                       • Set issued & expiry dates
+                       • Add remarks
+
+documents/edit.php   → Update document info
+                       • Change dates
+                       • Replace file
+                       • Update status automatically
+
+documents/delete.php → Remove document and file
+                       (Admin only)
+
+documents/compliance.php → 📋 RA 9184 CHECKLIST
+                          • Select supplier
+                          • View all 11 document types
+                          • Compliance percentage
+                          • Color-coded status
+                          • Printable report
+
+👥 USERS MODULE
+-----------------
+users/list.php       → Table of all users
+                       Shows: Username, Name, Role, Status
+
+users/add.php        → Create new user
+                       • Set username/password
+                       • Choose role (4 options)
+                       • Active/Inactive status
+
+users/edit.php       → Update user details
+                       • Change password (optional)
+                       • Update role/status
+
+users/delete.php     → Remove user account
+                       (Cannot delete yourself)
+
+📜 LOGS MODULE
+-----------------
+logs/activity.php    → Activity log viewer
+                       • Filter by user/module/date
+                       • Shows all system actions
+                       • IP address tracking
+                       • Pagination (50 per page)
+
+🔧 CONFIGURATION
+-----------------
+config/db.php        → Contains:
+                       • Database connection
+                       • Helper functions:
+                         - logActivity()
+                         - checkPermission()
+                         - sanitize()
+                         - updateDocumentStatus()
+                         - formatDate()
+                         - getStatusBadge()
+
+🎨 TEMPLATES
+-----------------
+includes/header.php  → HTML head, Bootstrap CSS, custom styles
+includes/navbar.php  → Sidebar menu (role-based)
+includes/footer.php  → Bootstrap JS, jQuery, auto-hide alerts
+
+
+=====================================
+NAVIGATION FLOW
+=====================================
+
+START: http://localhost/bac-system/public/
+
+1. LOGIN (index.php)
+   ↓
+2. DASHBOARD (dashboard.php)
+   ├─→ Suppliers → list.php → add/edit/view/delete
+   ├─→ Documents → list.php → add/edit/delete
+   ├─→ Compliance Check → compliance.php
+   ├─→ Users (Admin) → list.php → add/edit/delete
+   ├─→ Activity Logs → activity.php
+   └─→ Logout → logout.php → back to LOGIN
+
+
+=====================================
+DATABASE STRUCTURE
+=====================================
+
+database.sql creates:
+
+1. users
+   ├─ id, username, password (hashed)
+   ├─ full_name, email
+   ├─ role (4 types)
+   └─ status (Active/Inactive)
+
+2. suppliers
+   ├─ id, company_name, address
+   ├─ tin, philgeps_number
+   ├─ email, contact_person, contact_no
+   └─ status (Active/Inactive)
+
+3. doc_types (13 pre-loaded types)
+   ├─ id, document_name
+   ├─ description
+   └─ is_required (1/0)
+
+4. eligibility_docs
+   ├─ id, supplier_id, doc_type_id
+   ├─ issued_date, expiration_date
+   ├─ file_path
+   ├─ status (Valid/Expired/For Renewal/Missing)
+   └─ remarks
+
+5. activity_logs
+   ├─ id, user_id
+   ├─ action, module
+   ├─ ip_address
+   └─ created_at
+
+
+=====================================
+USER WORKFLOW EXAMPLES
+=====================================
+
+EXAMPLE 1: Add Supplier & Upload Documents
+-------------------------------------------
+1. Login as Admin/Secretariat
+2. Go to Suppliers → Add New Supplier
+3. Fill form (Company name, TIN, etc.)
+4. Click Save
+5. Go to Documents → Upload Document
+6. Select the supplier from dropdown
+7. Select document type (e.g., Mayor's Permit)
+8. Upload PDF file
+9. Set expiration date
+10. Click Upload
+11. Status auto-calculated (Valid/Expired/etc.)
+
+EXAMPLE 2: Check Compliance
+----------------------------
+1. Login with any role
+2. Go to Compliance Check
+3. Select supplier from dropdown
+4. Click "Check Compliance"
+5. View all 11 document types
+6. See compliance percentage
+7. Print report if needed
+
+EXAMPLE 3: Monitor Expiring Documents
+--------------------------------------
+1. Login as Admin/Secretariat
+2. View Dashboard
+3. Check "Documents Requiring Attention" table
+4. See documents expiring soon or expired
+5. Click Edit to update/renew
+
+
+=====================================
+FILE PERMISSIONS (Windows)
+=====================================
+
+Make sure these folders are writable:
+✓ uploads/  ← Must allow file creation
+
+
+=====================================
+IMPORTANT URLs
+=====================================
+
+Login Page:
+http://localhost/bac-system/public/
+
+Dashboard:
+http://localhost/bac-system/public/dashboard.php
+
+phpMyAdmin:
+http://localhost/phpmyadmin
+
+
+=====================================
+DEFAULT CREDENTIALS
+=====================================
+
+Admin:
+Username: admin
+Password: admin123
+
+Secretariat:
+Username: secretariat  
+Password: secret123
+
+Committee:
+Username: member
+Password: member123
+
+Auditor:
+Username: auditor
+Password: audit123
+
+
+=====================================

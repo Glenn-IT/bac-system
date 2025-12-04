@@ -1,0 +1,432 @@
+╔══════════════════════════════════════════════════════════════╗
+║   BAC SYSTEM - INSTALLATION & TESTING CHECKLIST             ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 PRE-INSTALLATION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[/] XAMPP is installed on computer
+[/] All files are in: C:\xampp\htdocs\bac-system\
+[/] database.sql file is present
+[/] uploads/ folder exists
+
+
+🚀 INSTALLATION STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Start XAMPP
+[/] Open XAMPP Control Panel
+[/] Click "Start" button for Apache → Should turn GREEN
+[/] Click "Start" button for MySQL → Should turn GREEN
+[/] Wait for both services to be running
+
+STEP 2: Create Database
+[/] Open browser
+[/] Go to: http://localhost/phpmyadmin
+[/] Click "Import" tab at the top
+[/] Click "Choose File" button
+[/] Navigate to: C:\xampp\htdocs\bac-system\database.sql
+[/] Click "Go" button at the bottom
+[/] Wait for "Import has been successfully finished" message
+[/] Click "bac_system" database on left side
+[/] Verify 5 tables exist:
+    [/] users
+    [/] suppliers
+    [/] doc_types
+    [/] eligibility_docs
+    [/] activity_logs
+
+STEP 2.5: Fix Passwords (CRITICAL!)
+[ ] Open browser tab
+[ ] Go to: http://localhost/bac-system/fix_passwords.php
+[ ] Wait for green "ALL PASSWORDS FIXED SUCCESSFULLY!" message
+[ ] See table with all 4 user accounts
+[ ] This creates correct password hashes for login
+
+STEP 3: Test Access
+[/] Open new browser tab
+[/] Go to: http://localhost/bac-system/public/
+[/] Login page should appear with gradient design
+[/] No errors displayed
+
+
+✅ LOGIN TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test Admin Account:
+[/] Username: admin
+[/] Password: admin123
+[X] Click Login button <-- I doesnt accept the details even its correct can you double check it
+
+**FIX: Run http://localhost/bac-system/fix_passwords.php first!**
+**This creates the correct password hashes in the database.**
+
+[ ] After running fix_passwords.php, try login again:
+[ ] Dashboard appears
+[ ] Top right shows: "Admin" badge and "System Administrator"
+[ ] Sidebar shows all menu items:
+    [ ] Dashboard
+    [ ] Suppliers
+    [ ] Documents
+    [ ] Compliance Check
+    [ ] Users
+    [ ] Activity Logs
+    [ ] Logout
+
+Test Secretariat Account:
+[ ] Logout first
+[ ] Username: secretariat
+[ ] Password: secret123
+[ ] Login successful
+[ ] Dashboard appears
+[ ] Shows: "BAC Secretariat Staff" role
+[ ] Sidebar shows: Dashboard, Suppliers, Documents, Compliance, Logout
+[ ] "Users" menu NOT visible (correct)
+[ ] "Activity Logs" NOT visible (correct)
+
+Test Committee Member Account:
+[ ] Logout first
+[ ] Username: member
+[ ] Password: member123
+[ ] Login successful
+[ ] Shows: "BAC Committee Member" role
+[ ] All menus are view-only
+
+Test Auditor Account:
+[ ] Logout first
+[ ] Username: auditor
+[ ] Password: audit123
+[ ] Login successful
+[ ] Shows: "Auditor/COA" role
+[ ] Can see Activity Logs
+[ ] All other pages are view-only
+
+
+🏢 SUPPLIER MODULE TESTING (Login as Admin)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add Supplier:
+[ ] Click "Suppliers" in sidebar
+[ ] Click "Add New Supplier" button
+[ ] Fill in form:
+    Company Name: ABC Construction Corp.
+    Address: 123 Main Street, Manila
+    TIN: 123-456-789-000
+    PhilGEPS: PG-2024-001
+    Email: abc@construction.ph
+    Contact Person: Juan Dela Cruz
+    Contact No: 09171234567
+    Status: Active
+[ ] Click "Save Supplier"
+[ ] Success message appears
+[ ] Redirected to suppliers list
+[ ] New supplier appears in table
+
+View Supplier:
+[ ] Click eye icon (View) on the supplier
+[ ] Detailed information displays
+[ ] Document summary shows (all zeros initially)
+[ ] Back to List button works
+
+Edit Supplier:
+[ ] Click pencil icon (Edit)
+[ ] Form pre-filled with data
+[ ] Change contact number to: 09181234567
+[ ] Click "Update Supplier"
+[ ] Success message appears
+[ ] Changes reflected in list
+
+Search Supplier:
+[ ] In suppliers list, use search box
+[ ] Type "ABC"
+[ ] Click Search
+[ ] Supplier appears
+[ ] Click Clear
+[ ] All suppliers show
+
+
+📄 DOCUMENT MODULE TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Upload Document:
+[ ] Click "Documents" in sidebar
+[ ] Click "Upload Document" button
+[ ] Select Supplier: ABC Construction Corp.
+[ ] Select Document Type: Mayor's Permit
+[ ] Issued Date: (select today's date)
+[ ] Expiration Date: (select date 1 year from now)
+[ ] Upload a PDF file (any PDF for testing)
+[ ] Add Remarks: "Test upload - valid until next year"
+[ ] Click "Upload Document"
+[ ] Success message appears
+[ ] Document appears in list
+[ ] Status shows: VALID (green badge)
+
+Test Expired Document:
+[ ] Click "Upload Document" again
+[ ] Select same supplier
+[ ] Select: Tax Clearance
+[ ] Set Expiration Date: (yesterday's date)
+[ ] Upload file
+[ ] Click Upload
+[ ] Document appears with EXPIRED (red badge)
+
+Test For Renewal Status:
+[ ] Upload another document
+[ ] Set Expiration Date: (15 days from today)
+[ ] Upload and check
+[ ] Status shows: FOR RENEWAL (yellow badge)
+
+Test Missing Status:
+[ ] Upload document WITHOUT file
+[ ] Just fill dates and save
+[ ] Status shows: MISSING (gray badge)
+
+View/Download File:
+[ ] In documents list, find uploaded document
+[ ] Click download icon
+[ ] File opens in new tab
+[ ] File is viewable
+
+Edit Document:
+[ ] Click pencil icon on a document
+[ ] Change expiration date
+[ ] Click Update
+[ ] Status auto-updates based on new date
+
+Filter Documents:
+[ ] Use supplier dropdown filter
+[ ] Use status filter (Valid, Expired, etc.)
+[ ] Use document type filter
+[ ] Click Filter button
+[ ] Results update accordingly
+
+
+📋 COMPLIANCE CHECK TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Go to Compliance Check page
+[ ] Select Supplier: ABC Construction Corp.
+[ ] Click "Check Compliance"
+[ ] Supplier information displays
+[ ] Document summary cards show:
+    [ ] Valid count (green)
+    [ ] For Renewal count (yellow)
+    [ ] Expired count (red)
+    [ ] Missing count (gray)
+[ ] Compliance percentage bar displays
+[ ] Table shows all 13 document types
+[ ] Each document shows status badge
+[ ] "Add" button appears for missing documents
+[ ] "Edit" button appears for uploaded documents
+[ ] Click "Print Compliance Report"
+    [ ] Print dialog opens
+    [ ] Sidebar/buttons hidden in print view
+
+
+👥 USER MANAGEMENT TESTING (Admin Only)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add User:
+[ ] Click "Users" in sidebar
+[ ] Click "Add New User"
+[ ] Fill form:
+    Username: testuser
+    Full Name: Test User
+    Email: test@bac.gov.ph
+    Password: test123
+    Confirm Password: test123
+    Role: BAC Secretariat Staff
+    Status: Active
+[ ] Click "Save User"
+[ ] Success message appears
+[ ] New user in list
+
+Edit User:
+[ ] Click pencil icon on test user
+[ ] Change email to: testuser@bac.gov.ph
+[ ] Leave password fields empty
+[ ] Click "Update User"
+[ ] Changes saved
+[ ] Password still works (unchanged)
+
+Test New User Login:
+[ ] Logout
+[ ] Login with: testuser / test123
+[ ] Login successful
+[ ] Role is "BAC Secretariat Staff"
+[ ] Can access Suppliers and Documents
+[ ] Cannot access Users menu
+
+Delete User:
+[ ] Logout and login as admin again
+[ ] Go to Users
+[ ] Click trash icon on test user
+[ ] Confirm deletion
+[ ] User removed from list
+
+
+📜 ACTIVITY LOGS TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Click "Activity Logs" in sidebar
+[ ] Logs appear showing all actions:
+    [ ] User logged in
+    [ ] Added supplier
+    [ ] Uploaded document
+    [ ] Updated user
+    [ ] etc.
+[ ] Each log shows:
+    [ ] Date & Time
+    [ ] User name
+    [ ] Module
+    [ ] Action description
+    [ ] IP address
+[ ] Test filters:
+    [ ] Filter by user
+    [ ] Filter by module
+    [ ] Filter by date range
+[ ] Pagination works (if > 50 records)
+
+
+🎨 UI/UX TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dashboard:
+[ ] Statistics cards display with gradient colors
+[ ] Numbers update correctly
+[ ] "Documents Requiring Attention" table shows expiring docs
+[ ] Quick action buttons work
+
+Responsive Design:
+[ ] Resize browser window
+[ ] Mobile view (sidebar adapts)
+[ ] Tables scroll horizontally on small screens
+[ ] Forms stack vertically on mobile
+
+Alerts:
+[ ] Success messages auto-hide after 5 seconds
+[ ] Error messages display properly
+[ ] Close button works on alerts
+
+Badges:
+[ ] Status badges show correct colors:
+    Valid = Green
+    For Renewal = Yellow
+    Expired = Red
+    Missing = Gray
+    Active = Green
+    Inactive = Gray
+
+Navigation:
+[ ] All sidebar links work
+[ ] Breadcrumb/back buttons work
+[ ] Logout redirects to login
+[ ] Cannot access pages without login
+    [ ] Try: http://localhost/bac-system/public/dashboard.php (logged out)
+    [ ] Should redirect to login
+
+
+🔒 SECURITY TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Logout and try accessing dashboard directly
+    → Should redirect to login
+[ ] Login as Committee Member
+    → Try accessing: /users/list.php
+    → Should show "access denied" or redirect
+[ ] Login as Secretariat
+    → Try accessing delete pages
+    → Should be blocked (Admin only)
+[ ] Test SQL injection:
+    → Login with: admin' OR '1'='1
+    → Should fail (prepared statements protect)
+[ ] Test XSS:
+    → Add supplier with name: <script>alert('XSS')</script>
+    → Should display as text, not execute
+
+
+📊 DATA VALIDATION TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Try adding supplier with empty required fields
+    → Error message shows
+[ ] Try uploading invalid file type (.exe, .zip)
+    → Error message shows
+[ ] Try creating user with password < 6 chars
+    → Error message shows
+[ ] Try creating user with existing username
+    → Error message shows
+[ ] Try deleting own user account (Admin)
+    → Should be prevented
+
+
+🎯 FINAL VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Database:
+[ ] Check bac_system database in phpMyAdmin
+[ ] 5 tables exist
+[ ] doc_types has 13 rows
+[ ] users has 4 rows (default users)
+[ ] activity_logs has entries
+
+Files:
+[ ] uploads/ folder exists
+[ ] Uploaded files are in uploads/ folder
+[ ] File naming: doc_{supplier}_{type}_{timestamp}.ext
+
+Performance:
+[ ] Pages load within 1-2 seconds
+[ ] No PHP errors displayed
+[ ] No JavaScript console errors
+[ ] Images/icons load properly
+
+
+✅ SUCCESS CRITERIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If all items above are checked, the system is:
+✓ Properly installed
+✓ Fully functional
+✓ Ready for production use
+✓ Compliant with RA 9184 requirements
+
+
+🐛 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Issue: Blank page / White screen
+Fix: 
+  1. Check Apache is running
+  2. Check database.sql imported correctly
+  3. Check config/db.php settings
+
+Issue: Cannot upload files
+Fix:
+  1. Check uploads/ folder exists
+  2. Right-click uploads/ → Properties → Security
+  3. Give "Everyone" write permissions (Windows)
+
+Issue: Login fails
+Fix:
+  1. Check database has users
+  2. Use exact passwords: admin123, secret123, etc.
+  3. Clear browser cache
+
+Issue: Database connection error
+Fix:
+  1. Check MySQL is running in XAMPP
+  2. Verify database name: bac_system
+  3. Check config/db.php settings
+
+Issue: Session errors
+Fix:
+  1. Restart Apache in XAMPP
+  2. Clear browser cookies
+  3. Close all browser tabs
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+System Ready for Deployment! ✓
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
