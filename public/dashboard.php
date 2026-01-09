@@ -12,24 +12,20 @@ $page_title = "Dashboard";
 // Get statistics
 $stats = [];
 
-// Total Suppliers
-$result = $conn->query("SELECT COUNT(*) as count FROM suppliers WHERE status = 'Active'");
-$stats['total_suppliers'] = $result->fetch_assoc()['count'];
+// Total BAC Records
+$result = $conn->query("SELECT COUNT(*) as count FROM bac_records");
+$stats['total_records'] = $result->fetch_assoc()['count'];
 
-// Valid Documents
-$result = $conn->query("SELECT COUNT(*) as count FROM eligibility_docs WHERE status = 'Valid'");
-$stats['valid_docs'] = $result->fetch_assoc()['count'];
-
-// Expired Documents
-$result = $conn->query("SELECT COUNT(*) as count FROM eligibility_docs WHERE status = 'Expired'");
+// Expired Documents (from bac_documents)
+$result = $conn->query("SELECT COUNT(*) as count FROM bac_documents WHERE status = 'Expired'");
 $stats['expired_docs'] = $result->fetch_assoc()['count'];
 
-// For Renewal
-$result = $conn->query("SELECT COUNT(*) as count FROM eligibility_docs WHERE status = 'For Renewal'");
+// For Renewal (from bac_documents)
+$result = $conn->query("SELECT COUNT(*) as count FROM bac_documents WHERE status = 'For Renewal'");
 $stats['renewal_docs'] = $result->fetch_assoc()['count'];
 
-// Missing Documents
-$result = $conn->query("SELECT COUNT(*) as count FROM eligibility_docs WHERE status = 'Missing'");
+// Missing Documents (from bac_documents)
+$result = $conn->query("SELECT COUNT(*) as count FROM bac_documents WHERE status = 'Missing'");
 $stats['missing_docs'] = $result->fetch_assoc()['count'];
 
 // Recent Activity
@@ -46,15 +42,15 @@ if (in_array($_SESSION['user_role'], ['Admin', 'Auditor/COA'])) {
     $stmt->close();
 }
 
-// Upcoming Expirations (next 30 days)
+// Upcoming Expirations (next 30 days) - from bac_documents
 $upcoming_expiry = [];
-$stmt = $conn->prepare("SELECT ed.*, s.company_name, dt.document_name 
-                       FROM eligibility_docs ed
-                       INNER JOIN suppliers s ON ed.supplier_id = s.id
-                       INNER JOIN doc_types dt ON ed.doc_type_id = dt.id
-                       WHERE ed.status IN ('For Renewal', 'Expired')
-                       AND ed.expiration_date IS NOT NULL
-                       ORDER BY ed.expiration_date ASC
+$stmt = $conn->prepare("SELECT bd.*, br.bac_cod, dt.document_name 
+                       FROM bac_documents bd
+                       INNER JOIN bac_records br ON bd.bac_record_id = br.id
+                       INNER JOIN doc_types dt ON bd.doc_type_id = dt.id
+                       WHERE bd.status IN ('For Renewal', 'Expired')
+                       AND bd.expiry_date IS NOT NULL
+                       ORDER BY bd.expiry_date ASC
                        LIMIT 10");
 $stmt->execute();
 $result = $stmt->get_result();
@@ -70,35 +66,21 @@ include '../includes/navbar.php';
 <div class="container-fluid">
     <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
             <div class="stats-card">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="mb-1 opacity-75">Total Suppliers</h6>
-                        <h2 class="mb-0"><?php echo $stats['total_suppliers']; ?></h2>
+                        <h6 class="mb-1 opacity-75">BAC Records</h6>
+                        <h2 class="mb-0"><?php echo $stats['total_records']; ?></h2>
                     </div>
                     <div>
-                        <i class="bi bi-building" style="font-size: 3rem; opacity: 0.3;"></i>
+                        <i class="bi bi-file-earmark-plus" style="font-size: 3rem; opacity: 0.3;"></i>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-3 mb-3">
-            <div class="stats-card success">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1 opacity-75">Valid Documents</h6>
-                        <h2 class="mb-0"><?php echo $stats['valid_docs']; ?></h2>
-                    </div>
-                    <div>
-                        <i class="bi bi-check-circle" style="font-size: 3rem; opacity: 0.3;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
             <div class="stats-card warning">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -112,7 +94,7 @@ include '../includes/navbar.php';
             </div>
         </div>
         
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
             <div class="stats-card danger">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -140,7 +122,7 @@ include '../includes/navbar.php';
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Supplier</th>
+                                        <th>BAC COD</th>
                                         <th>Document</th>
                                         <th>Expiry Date</th>
                                         <th>Status</th>
@@ -149,9 +131,9 @@ include '../includes/navbar.php';
                                 <tbody>
                                     <?php foreach ($upcoming_expiry as $doc): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($doc['company_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($doc['bac_cod']); ?></td>
                                             <td><?php echo htmlspecialchars($doc['document_name']); ?></td>
-                                            <td><?php echo formatDate($doc['expiration_date']); ?></td>
+                                            <td><?php echo formatDate($doc['expiry_date']); ?></td>
                                             <td>
                                                 <span class="badge <?php echo getStatusBadge($doc['status']); ?>">
                                                     <?php echo $doc['status']; ?>
@@ -175,7 +157,7 @@ include '../includes/navbar.php';
                 <div class="card-header">
                     <i class="bi bi-clock-history"></i> Recent Activity
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                     <?php if (count($recent_activity) > 0): ?>
                         <div class="list-group list-group-flush">
                             <?php foreach ($recent_activity as $activity): ?>
@@ -207,24 +189,24 @@ include '../includes/navbar.php';
                     <div class="row">
                         <?php if (in_array($_SESSION['user_role'], ['Admin', 'BAC Secretariat Staff'])): ?>
                             <div class="col-md-3 mb-2">
-                                <a href="../suppliers/add.php" class="btn btn-primary w-100">
-                                    <i class="bi bi-plus-circle"></i> Add Supplier
+                                <a href="../records/add.php" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-circle"></i> Add New Record
                                 </a>
                             </div>
                             <div class="col-md-3 mb-2">
-                                <a href="../documents/add.php" class="btn btn-success w-100">
-                                    <i class="bi bi-file-earmark-plus"></i> Upload Document
+                                <a href="../bac-docs/add.php" class="btn btn-success w-100">
+                                    <i class="bi bi-file-earmark-plus"></i> Upload BAC Document
                                 </a>
                             </div>
                         <?php endif; ?>
                         <div class="col-md-3 mb-2">
-                            <a href="../suppliers/list.php" class="btn btn-info w-100 text-white">
-                                <i class="bi bi-list-ul"></i> View Suppliers
+                            <a href="../records/list.php" class="btn btn-info w-100 text-white">
+                                <i class="bi bi-list-ul"></i> View Records
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="../documents/compliance.php" class="btn btn-warning w-100">
-                                <i class="bi bi-clipboard-check"></i> Compliance Check
+                            <a href="../bac-docs/compliance.php" class="btn btn-warning w-100">
+                                <i class="bi bi-clipboard-check"></i> BAC Compliance Check
                             </a>
                         </div>
                     </div>
