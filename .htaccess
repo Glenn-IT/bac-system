@@ -1,4 +1,5 @@
 # Security Settings
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
@@ -13,15 +14,18 @@
 </IfModule>
 
 # Disable directory browsing
+
 Options -Indexes
 
 # Prevent access to sensitive files
+
 <FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
+Order allow,deny
+Deny from all
 </FilesMatch>
 
 # PHP security settings
+
 <IfModule mod_php7.c>
     php_flag display_errors Off
     php_flag log_errors On
