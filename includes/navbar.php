@@ -14,16 +14,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </div>
     
     <nav class="nav flex-column">
-        <!--<a class="nav-link <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>" href="../public/dashboard.php">
+        <a class="nav-link <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>" href="../public/dashboard.php">
             <i class="bi bi-speedometer2"></i> Dashboard
-        </a>-->
+        </a>
         
         <?php if (in_array($_SESSION['user_role'], ['Admin', 'BAC Secretariat Staff', 'BAC Committee Member'])): ?>
         <a class="nav-link <?php echo strpos($current_page, 'records') !== false ? 'active' : ''; ?>" href="../records/list.php">
             <i class="bi bi-file-earmark-plus"></i> New Record
         </a>
         
-       <!-- <a class="nav-link <?php echo strpos($current_page, 'suppliers') !== false ? 'active' : ''; ?>" href="../suppliers/list.php">
+        <!--<a class="nav-link <?php echo strpos($current_page, 'suppliers') !== false ? 'active' : ''; ?>" href="../suppliers/list.php">
             <i class="bi bi-building"></i> Suppliers
         </a>-->
         
@@ -35,34 +35,34 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-folder-fill"></i> BAC Documents
         </a>-->
         
-       <!-- <a class="nav-link <?php echo (strpos($current_page, 'compliance.php') !== false && strpos($_SERVER['REQUEST_URI'], 'bac-docs') !== false) ? 'active' : ''; ?>" href="../bac-docs/compliance.php">
+        <a class="nav-link <?php echo (strpos($current_page, 'compliance.php') !== false && strpos($_SERVER['REQUEST_URI'], 'bac-docs') !== false) ? 'active' : ''; ?>" href="../bac-docs/compliance.php">
             <i class="bi bi-clipboard-check"></i> BAC Compliance Check
-        </a>-->
+        </a>
         
         <!--<a class="nav-link <?php echo $current_page == 'compliance.php' ? 'active' : ''; ?>" href="../documents/compliance.php">
             <i class="bi bi-clipboard-check"></i> Compliance Check
         </a>-->
         <?php endif; ?>
         
-        <?php /* HIDDEN - Users menu disabled
+        <?php /* HIDDEN - Users menu disabled*/
         if ($_SESSION['user_role'] == 'Admin'): ?>
         <a class="nav-link <?php echo strpos($current_page, 'users') !== false ? 'active' : ''; ?>" href="../users/list.php">
             <i class="bi bi-people"></i> Users
         </a>
-        <?php endif; */ ?>
+        <?php endif;  ?>
         
-        <?php /* HIDDEN - Activity Logs menu disabled
+        <?php /* HIDDEN - Activity Logs menu disabled*/
         if (in_array($_SESSION['user_role'], ['Admin', 'Auditor/COA'])): ?>
         <a class="nav-link <?php echo $current_page == 'activity.php' ? 'active' : ''; ?>" href="../logs/activity.php">
             <i class="bi bi-clock-history"></i> Activity Logs
         </a>
-        <?php endif; */ ?>
+        <?php endif;  ?>
         
         <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 15px;">
         
-       <!-- <a class="nav-link" href="../public/logout.php">
+       <!-- --><a class="nav-link" href="../public/logout.php">
             <i class="bi bi-box-arrow-right"></i> Logout
-        </a> -->
+        </a> 
     </nav>
 </div>
 
