@@ -30,6 +30,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($bac_record_id == 0 || $doc_type_id == 0) {
         $error = "Please select BAC COD and document type.";
     } else {
+        // Check if this document type already exists for this BAC record
+        $check_stmt = $conn->prepare("SELECT id FROM bac_documents WHERE bac_record_id = ? AND doc_type_id = ?");
+        $check_stmt->bind_param("ii", $bac_record_id, $doc_type_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        
+        if ($check_result->num_rows > 0) {
+            // Get document type name for error message
+            $dt_stmt = $conn->prepare("SELECT document_name FROM doc_types WHERE id = ?");
+            $dt_stmt->bind_param("i", $doc_type_id);
+            $dt_stmt->execute();
+            $dt_result = $dt_stmt->get_result();
+            $doc_type_name = $dt_result->fetch_assoc()['document_name'];
+            $dt_stmt->close();
+            
+            $error = "This BAC record already has a document of type '<strong>" . htmlspecialchars($doc_type_name) . "</strong>'. Please edit the existing document instead of uploading a duplicate.";
+        }
+        $check_stmt->close();
+        
+        if (!$error) {
         $file_path = '';
         
         // Handle file upload
@@ -85,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $error = "Error adding document: " . $conn->error;
             }
             $stmt->close();
+        }
         }
     }
 }

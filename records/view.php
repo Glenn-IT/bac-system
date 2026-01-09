@@ -32,6 +32,13 @@ if ($result->num_rows == 0) {
 $record = $result->fetch_assoc();
 $stmt->close();
 
+// Get all document types
+$all_doc_types = [];
+$dt_query = $conn->query("SELECT id, document_name FROM doc_types ORDER BY document_name");
+while ($dt = $dt_query->fetch_assoc()) {
+    $all_doc_types[] = $dt;
+}
+
 // Get all BAC documents for this record
 $docs_stmt = $conn->prepare("SELECT bd.*, dt.document_name, u.full_name as uploaded_by_name 
                              FROM bac_documents bd
@@ -43,8 +50,24 @@ $docs_stmt->bind_param("i", $id);
 $docs_stmt->execute();
 $docs_result = $docs_stmt->get_result();
 $documents = [];
+$uploaded_doc_types = [];
 while ($row = $docs_result->fetch_assoc()) {
+    // Update document status
+    updateBacDocumentStatus($conn, $row['id']);
+    
+    // Re-fetch updated status WITH document_name
+    $update_stmt = $conn->prepare("SELECT bd.*, dt.document_name, u.full_name as uploaded_by_name 
+                                   FROM bac_documents bd
+                                   INNER JOIN doc_types dt ON bd.doc_type_id = dt.id
+                                   LEFT JOIN users u ON bd.uploaded_by = u.id
+                                   WHERE bd.id = ?");
+    $update_stmt->bind_param("i", $row['id']);
+    $update_stmt->execute();
+    $row = $update_stmt->get_result()->fetch_assoc();
+    $update_stmt->close();
+    
     $documents[] = $row;
+    $uploaded_doc_types[] = $row['doc_type_id'];
 }
 $docs_stmt->close();
 
@@ -109,23 +132,42 @@ include '../includes/navbar.php';
                 </div>
                 <div class="card-body">
                     <?php
-                    $total_docs = count($documents);
-                    $uploaded_docs = 0;
+                    // Calculate based on ALL document types vs uploaded documents
+                    $total_docs = count($all_doc_types);
+                    $uploaded_docs = count($documents);
+                    $valid_docs = 0;
+                    $expired_docs = 0;
+                    $renewal_docs = 0;
+                    
+                    // Count status types
                     foreach ($documents as $doc) {
-                        if ($doc['file_path'] && file_exists('../' . $doc['file_path'])) {
-                            $uploaded_docs++;
-                        }
+                        if ($doc['status'] == 'Valid') $valid_docs++;
+                        elseif ($doc['status'] == 'Expired') $expired_docs++;
+                        elseif ($doc['status'] == 'For Renewal') $renewal_docs++;
                     }
+                    
                     $missing_docs = $total_docs - $uploaded_docs;
                     ?>
                     <ul class="list-group">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Total Documents
+                            Total Document Types
                             <span class="badge bg-primary rounded-pill"><?php echo $total_docs; ?></span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Uploaded
                             <span class="badge bg-success rounded-pill"><?php echo $uploaded_docs; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Valid
+                            <span class="badge bg-success rounded-pill"><?php echo $valid_docs; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            For Renewal
+                            <span class="badge bg-warning rounded-pill"><?php echo $renewal_docs; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Expired
+                            <span class="badge bg-danger rounded-pill"><?php echo $expired_docs; ?></span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             Missing
@@ -144,7 +186,7 @@ include '../includes/navbar.php';
                                     <?php echo round($percentage, 1); ?>%
                                 </div>
                             </div>
-                            <small class="text-muted">Completion Rate</small>
+                            <small class="text-muted">Upload Completion Rate (<?php echo $uploaded_docs; ?> of <?php echo $total_docs; ?> document types)</small>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -167,6 +209,7 @@ include '../includes/navbar.php';
                                     <th>Document Type</th>
                                     <th>Issued Date</th>
                                     <th>Expiry Date</th>
+                                    <th>Status</th>
                                     <th>File</th>
                                     <th>Actions</th>
                                 </tr>
@@ -179,6 +222,11 @@ include '../includes/navbar.php';
                                             <td><?php echo htmlspecialchars($doc['document_name']); ?></td>
                                             <td><?php echo formatDate($doc['issued_date']); ?></td>
                                             <td><?php echo formatDate($doc['expiry_date']); ?></td>
+                                            <td>
+                                                <span class="badge <?php echo getStatusBadge($doc['status']); ?>">
+                                                    <?php echo $doc['status']; ?>
+                                                </span>
+                                            </td>
                                             <td>
                                                 <?php if ($doc['file_path'] && file_exists('../' . $doc['file_path'])): ?>
                                                     <a href="../<?php echo $doc['file_path']; ?>" target="_blank" class="btn btn-sm btn-info">
@@ -199,7 +247,7 @@ include '../includes/navbar.php';
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">
+                                        <td colspan="7" class="text-center text-muted">
                                             No documents uploaded yet.
                                             <?php if (in_array($_SESSION['user_role'], ['Admin', 'BAC Secretariat Staff'])): ?>
                                                 <br><br>
