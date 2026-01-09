@@ -161,15 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </button>
                 </form>
                 
-                <hr class="my-4">
+              
                 
-                <div class="text-muted small">
-                    <strong>Default Accounts:</strong><br>
-                    Admin: <code>admin / admin123</code><br>
-                    Secretariat: <code>secretariat / secret123</code><br>
-                    Member: <code>member / member123</code><br>
-                    Auditor: <code>auditor / audit123</code>
-                </div>
             </div>
         </div>
     </div>
