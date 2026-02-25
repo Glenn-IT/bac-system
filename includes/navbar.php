@@ -9,8 +9,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 <div class="sidebar">
     <div class="logo">
-        <i class="bi bi-award"></i><br>
-        BAC System
+        <img src="../img/Logo.jpg" alt="BFAR Logo"><br>
+        <span style="font-size:0.78rem; opacity:0.9; line-height:1.4;">Bureau of Fisheries<br>and Aquatic Resources<br><span style="font-size:0.7rem; opacity:0.7;">Bids &amp; Awards Committee</span></span>
     </div>
     
     <nav class="nav flex-column">
