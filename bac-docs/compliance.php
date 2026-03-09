@@ -15,8 +15,8 @@ $bac_record_id = isset($_GET['bac_record_id']) ? (int)$_GET['bac_record_id'] : 0
 // Get all BAC records
 $bac_records = $conn->query("SELECT id, bac_cod FROM bac_records ORDER BY bac_cod");
 
-// Get all document types
-$doc_types_query = $conn->query("SELECT * FROM doc_types ORDER BY document_name");
+// Get all document types (only categorized ones: II and III)
+$doc_types_query = $conn->query("SELECT * FROM doc_types WHERE category IS NOT NULL AND category != '' ORDER BY category, sort_order, document_name");
 $doc_types = [];
 while ($dt = $doc_types_query->fetch_assoc()) {
     $doc_types[] = $dt;
@@ -207,9 +207,33 @@ include '../includes/navbar.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $no = 1; foreach ($compliance_data as $item): ?>
+                            <?php 
+                            $no = 1; 
+                            $current_category = null;
+                            $letter_map = ['II. Eligibility and Technical Documents' => 'a', 'III. Financial Documents' => 'a'];
+                            foreach ($compliance_data as $item): 
+                                $item_category = $item['doc_type']['category'] ?? null;
+                                // Print category header row when category changes
+                                if ($item_category !== $current_category):
+                                    $current_category = $item_category;
+                            ?>
+                                <tr class="table-dark">
+                                    <td colspan="8">
+                                        <strong><i class="bi bi-folder2-open"></i> <?php echo htmlspecialchars($current_category); ?></strong>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                                 <tr>
-                                    <td><?php echo $no++; ?></td>
+                                    <td class="text-center">
+                                        <small class="text-muted"><?php 
+                                            // Use letter labeling within each category
+                                            static $cat_counters = [];
+                                            if (!isset($cat_counters[$item_category])) $cat_counters[$item_category] = 0;
+                                            $letter = chr(ord('a') + $cat_counters[$item_category]);
+                                            $cat_counters[$item_category]++;
+                                            echo $letter . '.';
+                                        ?></small>
+                                    </td>
                                     <td>
                                         <strong><?php echo htmlspecialchars($item['doc_type']['document_name']); ?></strong>
                                         <?php if ($item['doc_type']['description']): ?>

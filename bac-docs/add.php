@@ -17,8 +17,16 @@ $bac_record_id = isset($_GET['bac_record_id']) ? (int)$_GET['bac_record_id'] : 0
 // Get BAC records
 $bac_records = $conn->query("SELECT id, bac_cod FROM bac_records ORDER BY bac_cod DESC");
 
-// Get document types
-$doc_types = $conn->query("SELECT id, document_name FROM doc_types ORDER BY document_name");
+// Get document types with category, only ones that have a category (II or III)
+$doc_types_result = $conn->query("SELECT id, document_name, category, sort_order FROM doc_types WHERE category IS NOT NULL AND category != '' ORDER BY category, sort_order, document_name");
+$doc_types_all = [];
+$doc_type_categories = [];
+while ($dt = $doc_types_result->fetch_assoc()) {
+    $doc_types_all[] = $dt;
+    if (!in_array($dt['category'], $doc_type_categories)) {
+        $doc_type_categories[] = $dt['category'];
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $bac_record_id = (int)$_POST['bac_record_id'];
@@ -143,17 +151,36 @@ include '../includes/navbar.php';
                                     <?php endwhile; ?>
                                 </select>
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <!-- spacer -->
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="doc_category" class="form-label">Document Category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="doc_category" name="doc_category" required>
+                                    <option value="">-- Select Category --</option>
+                                    <?php foreach ($doc_type_categories as $cat): ?>
+                                        <option value="<?php echo htmlspecialchars($cat); ?>">
+                                            <?php echo htmlspecialchars($cat); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="doc_type_id" class="form-label">Document Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="doc_type_id" name="doc_type_id" required>
-                                    <option value="">Select Document Type</option>
-                                    <?php while ($dt = $doc_types->fetch_assoc()): ?>
-                                        <option value="<?php echo $dt['id']; ?>">
+                                <label for="doc_type_id" class="form-label">Documentary Requirements <span class="text-danger">*</span></label>
+                                <select class="form-select" id="doc_type_id" name="doc_type_id" required disabled>
+                                    <option value="">-- Select Category First --</option>
+                                    <?php foreach ($doc_types_all as $dt): ?>
+                                        <option value="<?php echo $dt['id']; ?>" 
+                                                data-category="<?php echo htmlspecialchars($dt['category']); ?>"
+                                                style="display:none;">
                                             <?php echo htmlspecialchars($dt['document_name']); ?>
                                         </option>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 </select>
+                                <small class="text-muted" id="doc_type_hint">Please select a category first.</small>
                             </div>
                             
                             <div class="col-md-6 mb-3">
@@ -192,3 +219,54 @@ include '../includes/navbar.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const categorySelect = document.getElementById('doc_category');
+    const docTypeSelect = document.getElementById('doc_type_id');
+    const docTypeHint = document.getElementById('doc_type_hint');
+    const allOptions = Array.from(docTypeSelect.querySelectorAll('option[data-category]'));
+
+    categorySelect.addEventListener('change', function () {
+        const selectedCategory = this.value;
+
+        // Reset doc type
+        docTypeSelect.value = '';
+        docTypeSelect.disabled = true;
+
+        // Remove all dynamic options first, keep placeholder
+        allOptions.forEach(opt => {
+            opt.style.display = 'none';
+            opt.disabled = true;
+        });
+
+        if (selectedCategory) {
+            // Filter options matching selected category
+            const matching = allOptions.filter(opt => opt.dataset.category === selectedCategory);
+            matching.forEach(opt => {
+                opt.style.display = '';
+                opt.disabled = false;
+            });
+
+            // Update placeholder
+            docTypeSelect.options[0].textContent = '-- Select Document Type --';
+            docTypeSelect.disabled = false;
+            docTypeHint.textContent = matching.length + ' document type(s) available.';
+        } else {
+            docTypeSelect.options[0].textContent = '-- Select Category First --';
+            docTypeHint.textContent = 'Please select a category first.';
+        }
+    });
+
+    // If form is re-submitted with errors, restore state
+    <?php if (!empty($_POST['doc_category']) && !empty($_POST['doc_type_id'])): ?>
+    (function () {
+        const cat = <?php echo json_encode($_POST['doc_category']); ?>;
+        const dtId = <?php echo json_encode($_POST['doc_type_id']); ?>;
+        categorySelect.value = cat;
+        categorySelect.dispatchEvent(new Event('change'));
+        docTypeSelect.value = dtId;
+    })();
+    <?php endif; ?>
+});
+</script>
