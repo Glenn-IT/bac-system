@@ -13,6 +13,7 @@ checkPermission(['Admin', 'BAC Secretariat Staff']);
 $page_title = "Upload BAC Document";
 $error = '';
 $bac_record_id = isset($_GET['bac_record_id']) ? (int)$_GET['bac_record_id'] : 0;
+$preselect_doc_type_id = isset($_GET['doc_type_id']) ? (int)$_GET['doc_type_id'] : 0;
 
 // Get BAC records
 $bac_records = $conn->query("SELECT id, bac_cod FROM bac_records ORDER BY bac_cod DESC");
@@ -349,6 +350,17 @@ document.addEventListener('DOMContentLoaded', function () {
         categorySelect.value = cat;
         categorySelect.dispatchEvent(new Event('change'));
         docTypeSelect.value = dtId;
+    })();
+    <?php elseif ($preselect_doc_type_id > 0): ?>
+    // Auto-select category and doc type from GET param (coming from compliance page)
+    (function () {
+        const allOpts = Array.from(docTypeSelect.querySelectorAll('option[data-category]'));
+        const target = allOpts.find(o => parseInt(o.value) === <?php echo $preselect_doc_type_id; ?>);
+        if (target) {
+            categorySelect.value = target.dataset.category;
+            categorySelect.dispatchEvent(new Event('change'));
+            docTypeSelect.value = target.value;
+        }
     })();
     <?php endif; ?>
 });

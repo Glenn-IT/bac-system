@@ -13,7 +13,11 @@ $page_title = "BAC Compliance Check";
 $bac_record_id = isset($_GET['bac_record_id']) ? (int)$_GET['bac_record_id'] : 0;
 
 // Get all BAC records
-$bac_records = $conn->query("SELECT id, bac_cod FROM bac_records ORDER BY bac_cod");
+$bac_records_raw = [];
+$bac_records_q = $conn->query("SELECT id, bac_cod FROM bac_records ORDER BY bac_cod");
+while ($r = $bac_records_q->fetch_assoc()) {
+    $bac_records_raw[] = $r;
+}
 
 // Get all document types (only categorized ones: II and III)
 $doc_types_query = $conn->query("SELECT * FROM doc_types WHERE category IS NOT NULL AND category != '' ORDER BY category, sort_order, document_name");
@@ -76,24 +80,29 @@ include '../includes/navbar.php';
         </div>
         <div class="card-body">
             <!-- BAC Record Selection -->
-            <form method="GET" class="mb-4">
+            <form method="GET" class="mb-4" id="compliance-form">
                 <div class="row">
                     <div class="col-md-6">
-                        <label for="bac_record_id" class="form-label">Select BAC Record to View Compliance</label>
+                        <label for="bac_search" class="form-label">Select BAC Record to View Compliance</label>
                         <div class="input-group">
-                            <select class="form-select" id="bac_record_id" name="bac_record_id" required>
-                                <option value="">-- Select BAC Record --</option>
-                                <?php while ($rec = $bac_records->fetch_assoc()): ?>
-                                    <option value="<?php echo $rec['id']; ?>" 
-                                        <?php echo ($bac_record_id == $rec['id']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($rec['bac_cod']); ?>
-                                    </option>
-                                <?php endwhile; ?>
-                            </select>
-                            <button type="submit" class="btn btn-primary">
+                            <input type="text" class="form-control" id="bac_search" 
+                                   placeholder="Type to search BAC COD..."
+                                   autocomplete="off"
+                                   value="<?php 
+                                        if ($bac_record_id > 0) {
+                                            foreach ($bac_records_raw as $r) {
+                                                if ($r['id'] == $bac_record_id) { echo htmlspecialchars($r['bac_cod']); break; }
+                                            }
+                                        }
+                                   ?>">
+                            <input type="hidden" name="bac_record_id" id="bac_record_id_input" value="<?php echo $bac_record_id; ?>">
+                            <button type="submit" class="btn btn-primary" id="check-btn">
                                 <i class="bi bi-search"></i> Check Compliance
                             </button>
                         </div>
+                        <!-- Suggestion dropdown -->
+                        <div id="bac_suggestions" class="list-group position-absolute z-3 w-auto" style="min-width:300px; display:none;"></div>
+                        <small class="text-muted" id="bac_search_hint"></small>
                     </div>
                 </div>
             </form>
@@ -278,7 +287,7 @@ include '../includes/navbar.php';
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </a>
                                             <?php else: ?>
-                                                <a href="add.php?bac_record_id=<?php echo $bac_record_id; ?>" class="btn btn-success btn-sm">
+                                                <a href="add.php?bac_record_id=<?php echo $bac_record_id; ?>&doc_type_id=<?php echo $item['doc_type']['id']; ?>" class="btn btn-success btn-sm">
                                                     <i class="bi bi-plus"></i> Add
                                                 </a>
                                             <?php endif; ?>
@@ -309,3 +318,65 @@ include '../includes/navbar.php';
 </style>
 
 <?php include '../includes/footer.php'; ?>
+
+<script>
+const bacRecords = <?php echo json_encode($bac_records_raw); ?>;
+
+const searchInput = document.getElementById('bac_search');
+const hiddenInput = document.getElementById('bac_record_id_input');
+const suggestionsBox = document.getElementById('bac_suggestions');
+const hintEl = document.getElementById('bac_search_hint');
+const checkBtn = document.getElementById('check-btn');
+
+// Disable submit if no valid record selected
+function validateSelection() {
+    checkBtn.disabled = !hiddenInput.value;
+}
+validateSelection();
+
+searchInput.addEventListener('input', function () {
+    const query = this.value.trim().toLowerCase();
+    hiddenInput.value = '';
+    validateSelection();
+    suggestionsBox.innerHTML = '';
+
+    if (!query) {
+        suggestionsBox.style.display = 'none';
+        hintEl.textContent = '';
+        return;
+    }
+
+    const matches = bacRecords.filter(r => r.bac_cod.toLowerCase().includes(query));
+
+    if (matches.length === 0) {
+        suggestionsBox.style.display = 'none';
+        hintEl.textContent = 'No BAC records found.';
+        return;
+    }
+
+    hintEl.textContent = '';
+    matches.forEach(r => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'list-group-item list-group-item-action';
+        item.textContent = r.bac_cod;
+        item.addEventListener('click', function () {
+            searchInput.value = r.bac_cod;
+            hiddenInput.value = r.id;
+            suggestionsBox.style.display = 'none';
+            hintEl.textContent = '';
+            validateSelection();
+        });
+        suggestionsBox.appendChild(item);
+    });
+
+    suggestionsBox.style.display = 'block';
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function (e) {
+    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.style.display = 'none';
+    }
+});
+</script>
