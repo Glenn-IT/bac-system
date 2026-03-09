@@ -76,6 +76,17 @@ include '../includes/navbar.php';
 ?>
 
 <div class="container-fluid">
+    <?php if (isset($_GET['success']) && $_GET['success'] === 'doc_added'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> Document uploaded successfully.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php elseif (isset($_GET['success']) && $_GET['success'] === 'doc_updated'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> Document updated successfully.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
     <div class="row">
         <div class="col-md-8">
             <div class="card mb-4">

@@ -28,6 +28,19 @@ while ($dt = $doc_types_result->fetch_assoc()) {
     }
 }
 
+// Pre-load already-uploaded doc type IDs for the pre-selected BAC record
+$uploaded_doc_type_ids = [];
+if ($bac_record_id > 0) {
+    $ul_stmt = $conn->prepare("SELECT doc_type_id FROM bac_documents WHERE bac_record_id = ?");
+    $ul_stmt->bind_param("i", $bac_record_id);
+    $ul_stmt->execute();
+    $ul_result = $ul_stmt->get_result();
+    while ($ul_row = $ul_result->fetch_assoc()) {
+        $uploaded_doc_type_ids[] = (int)$ul_row['doc_type_id'];
+    }
+    $ul_stmt->close();
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $bac_record_id = (int)$_POST['bac_record_id'];
     $doc_type_id = (int)$_POST['doc_type_id'];
@@ -59,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (!$error) {
         $file_path = '';
+        $file_name = '';
         
         // Handle file upload
         if (isset($_FILES['document_file']) && $_FILES['document_file']['error'] == 0) {
@@ -107,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $bac_stmt->close();
                 
                 logActivity($conn, $_SESSION['user_id'], "Uploaded BAC document for " . $bac_record['bac_cod'], 'BAC Documents');
-                header("Location: list.php?success=added");
+                header("Location: ../records/view.php?id=" . $bac_record_id . "&success=doc_added");
                 exit();
             } else {
                 $error = "Error adding document: " . $conn->error;
@@ -138,6 +152,7 @@ include '../includes/navbar.php';
                     <?php endif; ?>
                     
                     <form method="POST" action="" enctype="multipart/form-data">
+                        <input type="hidden" name="bac_record_id_hidden_for_redirect" value="<?php echo $bac_record_id; ?>">
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="bac_record_id" class="form-label">BAC COD <span class="text-danger">*</span></label>
@@ -172,11 +187,15 @@ include '../includes/navbar.php';
                                 <label for="doc_type_id" class="form-label">Documentary Requirements <span class="text-danger">*</span></label>
                                 <select class="form-select" id="doc_type_id" name="doc_type_id" required disabled>
                                     <option value="">-- Select Category First --</option>
-                                    <?php foreach ($doc_types_all as $dt): ?>
+                                    <?php foreach ($doc_types_all as $dt): 
+                                        $already_uploaded = in_array($dt['id'], $uploaded_doc_type_ids);
+                                    ?>
                                         <option value="<?php echo $dt['id']; ?>" 
                                                 data-category="<?php echo htmlspecialchars($dt['category']); ?>"
-                                                style="display:none;">
-                                            <?php echo htmlspecialchars($dt['document_name']); ?>
+                                                data-already-uploaded="<?php echo $already_uploaded ? '1' : '0'; ?>"
+                                                style="display:none;"
+                                                <?php echo $already_uploaded ? 'disabled class="text-muted"' : ''; ?>>
+                                            <?php echo htmlspecialchars($dt['document_name']); ?><?php echo $already_uploaded ? ' ✓ (Already Added)' : ''; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -204,9 +223,15 @@ include '../includes/navbar.php';
                         <hr>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="list.php" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to List
-                            </a>
+                            <?php if ($bac_record_id > 0): ?>
+                                <a href="../records/view.php?id=<?php echo $bac_record_id; ?>" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to Record
+                                </a>
+                            <?php else: ?>
+                                <a href="../records/list.php" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to List
+                                </a>
+                            <?php endif; ?>
                             <button type="submit" class="btn btn-success">
                                 <i class="bi bi-upload"></i> Upload Document
                             </button>
@@ -221,11 +246,69 @@ include '../includes/navbar.php';
 <?php include '../includes/footer.php'; ?>
 
 <script>
+// All uploaded doc type IDs per BAC record (loaded via PHP for pre-selected, or via fetch for dynamic)
+const preloadedUploadedIds = <?php echo json_encode($uploaded_doc_type_ids); ?>;
+const preloadedBacRecordId = <?php echo $bac_record_id; ?>;
+
 document.addEventListener('DOMContentLoaded', function () {
+    const bacRecordSelect = document.getElementById('bac_record_id');
     const categorySelect = document.getElementById('doc_category');
     const docTypeSelect = document.getElementById('doc_type_id');
     const docTypeHint = document.getElementById('doc_type_hint');
     const allOptions = Array.from(docTypeSelect.querySelectorAll('option[data-category]'));
+
+    // Track uploaded doc type IDs for the currently selected BAC record
+    let currentUploadedIds = preloadedUploadedIds.slice();
+
+    function applyUploadedState() {
+        allOptions.forEach(opt => {
+            const alreadyUploaded = currentUploadedIds.includes(parseInt(opt.value));
+            opt.dataset.alreadyUploaded = alreadyUploaded ? '1' : '0';
+            if (alreadyUploaded) {
+                if (!opt.textContent.includes('✓')) {
+                    opt.textContent = opt.dataset.origText + ' ✓ (Already Added)';
+                }
+                opt.disabled = true;
+                opt.style.color = '#aaa';
+            } else {
+                opt.textContent = opt.dataset.origText;
+                opt.disabled = false;
+                opt.style.color = '';
+            }
+        });
+    }
+
+    // Store original text for each option
+    allOptions.forEach(opt => {
+        opt.dataset.origText = opt.textContent.replace(' ✓ (Already Added)', '').trim();
+    });
+
+    // Apply initial state for preloaded record
+    applyUploadedState();
+
+    // When BAC COD changes, fetch uploaded doc types for that record
+    bacRecordSelect.addEventListener('change', function () {
+        const selectedBacId = parseInt(this.value);
+        currentUploadedIds = [];
+        
+        // Reset doc type dropdown
+        docTypeSelect.value = '';
+        docTypeSelect.disabled = true;
+        categorySelect.value = '';
+        allOptions.forEach(opt => { opt.style.display = 'none'; opt.disabled = true; });
+        docTypeSelect.options[0].textContent = '-- Select Category First --';
+        docTypeHint.textContent = 'Please select a category first.';
+
+        if (!selectedBacId) return;
+
+        // Fetch already-uploaded doc types for this BAC record
+        fetch('../bac-docs/get_uploaded_doctypes.php?bac_record_id=' + selectedBacId)
+            .then(r => r.json())
+            .then(ids => {
+                currentUploadedIds = ids;
+                applyUploadedState();
+            });
+    });
 
     categorySelect.addEventListener('change', function () {
         const selectedCategory = this.value;
@@ -234,24 +317,31 @@ document.addEventListener('DOMContentLoaded', function () {
         docTypeSelect.value = '';
         docTypeSelect.disabled = true;
 
-        // Remove all dynamic options first, keep placeholder
+        // Hide all options
         allOptions.forEach(opt => {
             opt.style.display = 'none';
-            opt.disabled = true;
+            if (opt.dataset.alreadyUploaded !== '1') opt.disabled = true;
         });
 
         if (selectedCategory) {
-            // Filter options matching selected category
             const matching = allOptions.filter(opt => opt.dataset.category === selectedCategory);
             matching.forEach(opt => {
                 opt.style.display = '';
-                opt.disabled = false;
+                if (opt.dataset.alreadyUploaded !== '1') {
+                    opt.disabled = false;
+                }
             });
 
-            // Update placeholder
             docTypeSelect.options[0].textContent = '-- Select Document Type --';
             docTypeSelect.disabled = false;
-            docTypeHint.textContent = matching.length + ' document type(s) available.';
+
+            const availableCount = matching.filter(opt => opt.dataset.alreadyUploaded !== '1').length;
+            const alreadyCount = matching.filter(opt => opt.dataset.alreadyUploaded === '1').length;
+            let hintText = availableCount + ' document type(s) available.';
+            if (alreadyCount > 0) {
+                hintText += ' ' + alreadyCount + ' already added (shown as disabled).';
+            }
+            docTypeHint.textContent = hintText;
         } else {
             docTypeSelect.options[0].textContent = '-- Select Category First --';
             docTypeHint.textContent = 'Please select a category first.';

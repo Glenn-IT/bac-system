@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 updateBacDocumentStatus($conn, $id);
                 
                 logActivity($conn, $_SESSION['user_id'], "Updated BAC document for " . $document['bac_cod'], 'BAC Documents');
-                header("Location: list.php?success=updated");
+                header("Location: ../records/view.php?id=" . $bac_record_id . "&success=doc_updated");
                 exit();
             } else {
                 $error = "Error updating document: " . $conn->error;
@@ -189,8 +189,8 @@ include '../includes/navbar.php';
                         <hr>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="list.php" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to List
+                            <a href="../records/view.php?id=<?php echo $document['bac_record_id']; ?>" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Record
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Update Document
