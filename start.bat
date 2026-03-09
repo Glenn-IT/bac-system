@@ -19,27 +19,49 @@ if not exist "C:\xampp\apache\bin\httpd.exe" (
     exit
 )
 
-:: Start Apache
+:: Start Apache using XAMPP shell
 echo  [1/3] Starting Apache Web Server...
+"C:\xampp\apache\bin\httpd.exe" -k install >nul 2>&1
 "C:\xampp\apache\bin\httpd.exe" -k start >nul 2>&1
-net start Apache2.4 >nul 2>&1
-timeout /t 2 /nobreak >nul
+timeout /t 3 /nobreak >nul
+
+:: Verify Apache is actually running
+tasklist /FI "IMAGENAME eq httpd.exe" 2>nul | find /I "httpd.exe" >nul
+if %errorlevel% neq 0 (
+    color 0C
+    echo        Apache        [ FAILED ]
+    echo.
+    echo  ERROR: Apache failed to start.
+    echo  Please check if another program is using Port 80.
+    echo.
+    pause
+    exit
+)
 echo        Apache        [ OK ]
 
-:: Start MySQL
+:: Start MySQL using XAMPP shell
 echo  [2/3] Starting MySQL Database...
+"C:\xampp\mysql\bin\mysqld" --install >nul 2>&1
 net start MySQL >nul 2>&1
+timeout /t 4 /nobreak >nul
+
+:: Verify MySQL is actually running
+tasklist /FI "IMAGENAME eq mysqld.exe" 2>nul | find /I "mysqld.exe" >nul
 if %errorlevel% neq 0 (
-    start /B "" "C:\xampp\mysql\bin\mysqld" --defaults-file="C:\xampp\mysql\bin\my.ini" >nul 2>&1
+    color 0C
+    echo        MySQL         [ FAILED ]
+    echo.
+    echo  ERROR: MySQL failed to start.
+    echo  Please check if another program is using Port 3306.
+    echo.
+    pause
+    exit
 )
-timeout /t 3 /nobreak >nul
 echo        MySQL         [ OK ]
 
-:: Wait for full initialization
+:: Open browser
 echo  [3/3] Opening BAC System in browser...
 timeout /t 2 /nobreak >nul
-
-:: Open the system in default browser
 start "" "http://localhost/bac-system/public/index.php"
 
 echo.
