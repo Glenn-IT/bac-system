@@ -1,0 +1,87 @@
+====================================================
+  BAC Eligibilities Record Keeping System
+  Step-by-Step Installation Guide
+====================================================
+
+
+REQUIREMENTS
+------------
+  - A Windows PC
+  - XAMPP (free download)
+  - The bac-system folder (this folder)
+
+
+====================================================
+  STEP 1 - Install XAMPP
+====================================================
+
+  1. Go to: https://www.apachefriends.org/
+  2. Download XAMPP for Windows
+  3. Run the installer
+  4. Install to the default location: C:\xampp\
+  5. You do NOT need to launch XAMPP after installing
+
+
+====================================================
+  STEP 2 - Copy the bac-system Folder
+====================================================
+
+  1. Copy the entire "bac-system" folder
+  2. Paste it inside: C:\xampp\htdocs\
+
+  The final path should look like this:
+  C:\xampp\htdocs\bac-system\
+
+
+====================================================
+  STEP 3 - Run the Setup Script
+====================================================
+
+  1. Open the bac-system folder
+  2. Find the file: SETUP_NEW_COMPUTER.bat
+  3. RIGHT-CLICK it
+  4. Select "Run as administrator"
+  5. Press any key when prompted and wait
+
+  The script will automatically:
+    - Start MySQL and Apache
+    - Import the database
+    - Set both to auto-start on every boot
+    - Open the BAC System in your browser
+
+
+====================================================
+  STEP 4 - Log In
+====================================================
+
+  Once the browser opens, go to:
+  http://localhost/bac-system/public/index.php
+
+  Use your existing username and password to log in.
+
+
+====================================================
+  NOTES
+====================================================
+
+  - After setup, Apache and MySQL will AUTO-START
+    every time the computer turns on.
+    You do NOT need to open XAMPP manually.
+
+  - To STOP the system:
+    Run stop.bat (as administrator)
+
+  - To REMOVE auto-start:
+    Run uninstall_services.bat (as administrator)
+
+  - If you see a database error when opening the site,
+    run SETUP_NEW_COMPUTER.bat again as administrator.
+
+
+====================================================
+  NEED HELP?
+====================================================
+
+  Contact your system administrator.
+
+====================================================
