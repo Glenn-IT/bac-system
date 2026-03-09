@@ -32,9 +32,9 @@ if ($result->num_rows == 0) {
 $record = $result->fetch_assoc();
 $stmt->close();
 
-// Get all document types
+// Get all document types (only BAC-relevant ones with a category)
 $all_doc_types = [];
-$dt_query = $conn->query("SELECT id, document_name FROM doc_types ORDER BY document_name");
+$dt_query = $conn->query("SELECT id, document_name FROM doc_types WHERE category IS NOT NULL AND category != '' ORDER BY document_name");
 while ($dt = $dt_query->fetch_assoc()) {
     $all_doc_types[] = $dt;
 }

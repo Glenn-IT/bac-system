@@ -194,8 +194,8 @@ include '../includes/navbar.php';
                                                 data-category="<?php echo htmlspecialchars($dt['category']); ?>"
                                                 data-already-uploaded="<?php echo $already_uploaded ? '1' : '0'; ?>"
                                                 style="display:none;"
-                                                <?php echo $already_uploaded ? 'disabled class="text-muted"' : ''; ?>>
-                                            <?php echo htmlspecialchars($dt['document_name']); ?><?php echo $already_uploaded ? ' ✓ (Already Added)' : ''; ?>
+                                                <?php echo $already_uploaded ? 'disabled' : ''; ?>>
+                                            <?php echo htmlspecialchars($dt['document_name']); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -265,22 +265,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const alreadyUploaded = currentUploadedIds.includes(parseInt(opt.value));
             opt.dataset.alreadyUploaded = alreadyUploaded ? '1' : '0';
             if (alreadyUploaded) {
-                if (!opt.textContent.includes('✓')) {
-                    opt.textContent = opt.dataset.origText + ' ✓ (Already Added)';
-                }
                 opt.disabled = true;
-                opt.style.color = '#aaa';
+                opt.style.color = '#bbb';
+                opt.style.backgroundColor = '#f5f5f5';
             } else {
-                opt.textContent = opt.dataset.origText;
                 opt.disabled = false;
                 opt.style.color = '';
+                opt.style.backgroundColor = '';
             }
         });
     }
 
     // Store original text for each option
     allOptions.forEach(opt => {
-        opt.dataset.origText = opt.textContent.replace(' ✓ (Already Added)', '').trim();
+        opt.dataset.origText = opt.textContent.trim();
     });
 
     // Apply initial state for preloaded record
@@ -336,12 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
             docTypeSelect.disabled = false;
 
             const availableCount = matching.filter(opt => opt.dataset.alreadyUploaded !== '1').length;
-            const alreadyCount = matching.filter(opt => opt.dataset.alreadyUploaded === '1').length;
-            let hintText = availableCount + ' document type(s) available.';
-            if (alreadyCount > 0) {
-                hintText += ' ' + alreadyCount + ' already added (shown as disabled).';
-            }
-            docTypeHint.textContent = hintText;
+            docTypeHint.textContent = availableCount + ' document type(s) available.';
         } else {
             docTypeSelect.options[0].textContent = '-- Select Category First --';
             docTypeHint.textContent = 'Please select a category first.';
